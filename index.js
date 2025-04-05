@@ -5,7 +5,10 @@ const PORT = process.env.PORT || 8001;
 const server = createServer();
 
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: {
+    origin: "https://videobe-abhinavs-projects-5c325c75.vercel.app", // make sure to add https
+    methods: ["GET", "POST"]
+  }
 });
 
 const rooms = {}; // roomId: [socketId, ...]
