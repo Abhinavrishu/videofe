@@ -8,24 +8,33 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
+
+// ✅ Clean CORS setup — no trailing slash
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app';
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app/',
-  methods: ["GET", "POST"],
+  origin: FRONTEND_URL,
+  methods: ['GET', 'POST'],
   credentials: true
 }));
 
+// Optional: log incoming origin for debugging
+app.use((req, res, next) => {
+  console.log("Request Origin:", req.headers.origin);
+  next();
+});
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app/',
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true
   },
 });
 
-// Track users in rooms
+// In-memory room tracking
 const rooms = {};
 
 io.on('connection', (socket) => {
@@ -38,35 +47,33 @@ io.on('connection', (socket) => {
     if (!rooms[roomId]) rooms[roomId] = [];
     if (!rooms[roomId].includes(socket.id)) rooms[roomId].push(socket.id);
 
-    const otherUsers = rooms[roomId].filter((id) => id !== socket.id);
+    const otherUsers = rooms[roomId].filter(id => id !== socket.id);
     socket.emit('all-users', otherUsers);
     socket.to(roomId).emit('user-joined', socket.id);
 
-    // Handle offer
     socket.on('offer', ({ target, sdp }) => {
       io.to(target).emit('offer', { sdp, sender: socket.id });
     });
 
-    // Handle answer
     socket.on('answer', ({ target, sdp }) => {
       io.to(target).emit('answer', { sdp, sender: socket.id });
     });
 
-    // ICE Candidate
     socket.on('ice-candidate', ({ target, candidate }) => {
       io.to(target).emit('ice-candidate', { candidate, sender: socket.id });
     });
+  });
 
-    // Handle disconnection
-    socket.on('disconnect', () => {
-      console.log(`❌ ${socket.id} disconnected`);
+  socket.on('disconnect', () => {
+    console.log(`❌ ${socket.id} disconnected`);
 
-      if (rooms[roomId]) {
-        rooms[roomId] = rooms[roomId].filter((id) => id !== socket.id);
+    for (const roomId in rooms) {
+      if (rooms[roomId].includes(socket.id)) {
+        rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
         socket.to(roomId).emit('user-left', socket.id);
         if (rooms[roomId].length === 0) delete rooms[roomId];
       }
-    });
+    }
   });
 });
 
