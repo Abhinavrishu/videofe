@@ -1,4 +1,3 @@
-// server.js
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -9,17 +8,27 @@ dotenv.config();
 
 const app = express();
 
-// ✅ Clean CORS setup — no trailing slash
-const FRONTEND_URL = process.env.FRONTEND_URL 
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://videobe-abhinavs-projects-5c325c75.vercel.app";
+
+// CORS middleware
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ['GET', 'POST'],
   credentials: true
 }));
 
-// Optional: log incoming origin for debugging
+// Handle preflight requests manually
+app.options('*', (req, res) => {
+  res.header("Access-Control-Allow-Origin", FRONTEND_URL);
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(204);
+});
+
+// Log incoming origins for debugging
 app.use((req, res, next) => {
-  console.log("Request Origin:", req.headers.origin);
+  console.log("🌐 Request Origin:", req.headers.origin);
   next();
 });
 
@@ -30,10 +39,9 @@ const io = new Server(server, {
     origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true
-  },
+  }
 });
 
-// In-memory room tracking
 const rooms = {};
 
 io.on('connection', (socket) => {
