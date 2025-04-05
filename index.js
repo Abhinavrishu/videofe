@@ -8,7 +8,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app/',
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 
 const server = http.createServer(app);
 
@@ -16,6 +21,7 @@ const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app/',
     methods: ['GET', 'POST'],
+    credentials: true
   },
 });
 
