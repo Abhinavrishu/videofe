@@ -14,7 +14,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app/',
     methods: ['GET', 'POST'],
   },
 });
