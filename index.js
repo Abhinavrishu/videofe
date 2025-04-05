@@ -10,8 +10,7 @@ dotenv.config();
 const app = express();
 
 // ✅ Clean CORS setup — no trailing slash
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://videobe-abhinavs-projects-5c325c75.vercel.app';
-
+const FRONTEND_URL = process.env.FRONTEND_URL 
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ['GET', 'POST'],
