@@ -10,14 +10,15 @@ const app = express();
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://videobe-abhinavs-projects-5c325c75.vercel.app";
 
-// CORS middleware
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: (origin, callback) => {
+    console.log("🔍 CORS origin check:", origin);
+    callback(null, true);
+  },
   methods: ['GET', 'POST'],
   credentials: true
 }));
 
-// Handle preflight requests manually
 app.options('*', (req, res) => {
   res.header("Access-Control-Allow-Origin", FRONTEND_URL);
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -26,7 +27,6 @@ app.options('*', (req, res) => {
   res.sendStatus(204);
 });
 
-// Log incoming origins for debugging
 app.use((req, res, next) => {
   console.log("🌐 Request Origin:", req.headers.origin);
   next();
@@ -73,7 +73,6 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`❌ ${socket.id} disconnected`);
-
     for (const roomId in rooms) {
       if (rooms[roomId].includes(socket.id)) {
         rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
