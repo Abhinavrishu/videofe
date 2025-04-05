@@ -11,15 +11,16 @@ const app = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://videobe-abhinavs-projects-5c325c75.vercel.app";
 
 app.use(cors({
-  origin: (origin, callback) => {
-    console.log("🔍 CORS origin check:", origin);
-    callback(null, true);
-  },
+  origin: FRONTEND_URL,
   methods: ['GET', 'POST'],
   credentials: true
 }));
 
-app.options('*', (req, res) => {
+// Handle preflight requests
+const API_ROUTE_REGEX = /^\/api\/.*/;
+
+// CORS Preflight only for routes matching /api/*
+app.options(API_ROUTE_REGEX, (req, res) => {
   res.header("Access-Control-Allow-Origin", FRONTEND_URL);
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -27,10 +28,12 @@ app.options('*', (req, res) => {
   res.sendStatus(204);
 });
 
-app.use((req, res, next) => {
-  console.log("🌐 Request Origin:", req.headers.origin);
+// Debug request origins only for /api/* routes
+app.use(API_ROUTE_REGEX, (req, res, next) => {
+  console.log("🌐 API Request Origin:", req.headers.origin);
   next();
 });
+
 
 const server = http.createServer(app);
 
@@ -57,22 +60,23 @@ io.on('connection', (socket) => {
     const otherUsers = rooms[roomId].filter(id => id !== socket.id);
     socket.emit('all-users', otherUsers);
     socket.to(roomId).emit('user-joined', socket.id);
+  });
 
-    socket.on('offer', ({ target, sdp }) => {
-      io.to(target).emit('offer', { sdp, sender: socket.id });
-    });
+  socket.on('offer', ({ target, sdp }) => {
+    io.to(target).emit('offer', { sdp, sender: socket.id });
+  });
 
-    socket.on('answer', ({ target, sdp }) => {
-      io.to(target).emit('answer', { sdp, sender: socket.id });
-    });
+  socket.on('answer', ({ target, sdp }) => {
+    io.to(target).emit('answer', { sdp, sender: socket.id });
+  });
 
-    socket.on('ice-candidate', ({ target, candidate }) => {
-      io.to(target).emit('ice-candidate', { candidate, sender: socket.id });
-    });
+  socket.on('ice-candidate', ({ target, candidate }) => {
+    io.to(target).emit('ice-candidate', { candidate, sender: socket.id });
   });
 
   socket.on('disconnect', () => {
     console.log(`❌ ${socket.id} disconnected`);
+
     for (const roomId in rooms) {
       if (rooms[roomId].includes(socket.id)) {
         rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
