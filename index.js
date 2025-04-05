@@ -1,5 +1,6 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
+const PORT = process.env.PORT || 8001;
 
 // Create HTTP server
 const server = createServer();
@@ -41,6 +42,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(8001, () => {
+server.listen(PORT, () => {
   console.log("Socket.io server running on port 8001");
 });
