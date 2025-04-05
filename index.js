@@ -1,9 +1,9 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
-const PORT = process.env.PORT || 8001;
 
-// Create HTTP server
+const PORT = process.env.PORT || 8001;
 const server = createServer();
+
 const io = new Server(server, {
   cors: { origin: "*" },
 });
@@ -18,7 +18,6 @@ io.on("connection", (socket) => {
 
     const otherUsers = rooms[roomId].filter(id => id !== socket.id);
     socket.emit("all-users", otherUsers);
-
     socket.to(roomId).emit("user-joined", socket.id);
   });
 
@@ -43,5 +42,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log("Socket.io server running on port 8001");
+  console.log(`Socket.io server running on port ${PORT}`);
 });
